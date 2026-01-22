@@ -1,27 +1,96 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { ParticleField } from "./ParticleField";
 import { PresenceOrb } from "./PresenceOrb";
 import { AmbientText } from "./AmbientText";
+import { BreathingGuide } from "./BreathingGuide";
+import { ConsciousnessField } from "./ConsciousnessField";
+import { AudioToggle } from "./AudioToggle";
+import { ModeToggle } from "./ModeToggle";
+import { useHaptic } from "@/hooks/useHaptic";
+import { useAmbientAudio } from "@/hooks/useAmbientAudio";
 
 export const SublimeExperience = () => {
   const [isEngaged, setIsEngaged] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isBreathingMode, setIsBreathingMode] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const { lightTap, mediumTap, heavyTap } = useHaptic();
+  const { isMuted, toggleMute, setProximity, playBreathTone, playConnectionTone } = useAmbientAudio();
 
   const handleInteraction = useCallback(() => {
     if (!hasInteracted) {
       setHasInteracted(true);
+      mediumTap();
     }
     setIsEngaged(true);
-  }, [hasInteracted]);
+  }, [hasInteracted, mediumTap]);
+
+  const handleMove = useCallback((clientX: number, clientY: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (clientX - rect.left) / rect.width;
+    const y = (clientY - rect.top) / rect.height;
+    setMousePos({ x, y });
+
+    // Calculate proximity to center
+    const centerDist = Math.sqrt(Math.pow(x - 0.5, 2) + Math.pow(y - 0.5, 2));
+    const proximity = Math.max(0, 1 - centerDist * 2);
+    setProximity(proximity);
+  }, [setProximity]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    handleMove(e.clientX, e.clientY);
+  }, [handleMove]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      handleMove(touch.clientX, touch.clientY);
+      lightTap();
+    }
+  }, [handleMove, lightTap]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    handleInteraction();
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      handleMove(touch.clientX, touch.clientY);
+      heavyTap();
+    }
+  }, [handleInteraction, handleMove, heavyTap]);
+
+  const handleBreathPhase = useCallback((phase: "inhale" | "hold" | "exhale") => {
+    playBreathTone(phase);
+  }, [playBreathTone]);
+
+  const handleConnection = useCallback(() => {
+    playConnectionTone();
+    heavyTap();
+  }, [playConnectionTone, heavyTap]);
+
+  const toggleBreathingMode = useCallback(() => {
+    setIsBreathingMode(prev => !prev);
+    mediumTap();
+  }, [mediumTap]);
 
   return (
     <div 
-      className="relative h-full w-full cosmic-bg overflow-hidden cursor-default"
+      ref={containerRef}
+      className="relative h-full w-full cosmic-bg overflow-hidden cursor-default touch-none"
       onMouseEnter={handleInteraction}
-      onTouchStart={handleInteraction}
+      onMouseMove={handleMouseMove}
       onMouseLeave={() => setIsEngaged(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={() => setIsEngaged(false)}
     >
+      {/* Controls */}
+      <AudioToggle isMuted={isMuted} onToggle={toggleMute} />
+      <ModeToggle isBreathingMode={isBreathingMode} onToggle={toggleBreathingMode} />
+
       {/* Ambient background gradients */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
@@ -45,11 +114,20 @@ export const SublimeExperience = () => {
       {/* Particle field layer */}
       <ParticleField />
       
+      {/* Consciousness field - multiple orbs */}
+      <ConsciousnessField mousePos={mousePos} onConnection={handleConnection} />
+      
+      {/* Breathing guide overlay */}
+      <BreathingGuide isActive={isBreathingMode} onPhaseChange={handleBreathPhase} />
+      
       {/* Central presence container */}
       <div className="absolute inset-0 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
+          animate={{ 
+            opacity: isBreathingMode ? 0.3 : 1, 
+            scale: 1 
+          }}
           transition={{ duration: 2, ease: "easeOut" }}
         >
           <PresenceOrb />
@@ -57,7 +135,7 @@ export const SublimeExperience = () => {
       </div>
       
       {/* Ambient text */}
-      <AmbientText isActive={isEngaged} />
+      {!isBreathingMode && <AmbientText isActive={isEngaged} />}
       
       {/* Initial instruction */}
       {!hasInteracted && (
@@ -99,6 +177,18 @@ export const SublimeExperience = () => {
           }}
         />
       ))}
+
+      {/* Breathing mode hint */}
+      {hasInteracted && !isBreathingMode && (
+        <motion.div
+          className="absolute bottom-6 left-6 text-muted-foreground/50 text-xs"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 3 }}
+        >
+          <span className="font-sans tracking-wide">tap wind icon to breathe</span>
+        </motion.div>
+      )}
     </div>
   );
 };
