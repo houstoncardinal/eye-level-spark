@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { useCallback, useEffect, useRef, useState, useMemo, memo } from "react";
+import { motion, useSpring } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Particle {
   id: number;
@@ -13,9 +14,11 @@ interface Particle {
   twinkleSpeed: number;
 }
 
-const PARTICLE_COUNT = 120;
+const PARTICLE_COUNT_DESKTOP = 80;
+const PARTICLE_COUNT_MOBILE = 20;
 
 export const ParticleField = () => {
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
@@ -24,6 +27,8 @@ export const ParticleField = () => {
   const springConfig = { damping: 25, stiffness: 120 };
   const mouseX = useSpring(0.5, springConfig);
   const mouseY = useSpring(0.5, springConfig);
+
+  const PARTICLE_COUNT = isMobile ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
 
   useEffect(() => {
     const initialParticles: Particle[] = Array.from({ length: PARTICLE_COUNT }, (_, i) => {

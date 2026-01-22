@@ -1,255 +1,388 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { X, Play, Pause, Palette, Sparkles, Maximize2 } from "lucide-react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { X, Play, Pause, Palette, Sparkles, Maximize2, Navigation, Zap, Eye, RotateCcw, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
 
 interface KaleidoscopeProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type PatternType = "mandala" | "fractal" | "cosmic" | "sacred" | "aurora";
+type TunnelType = "flower-of-life" | "metatrons-cube" | "sri-yantra" | "merkaba" | "golden-spiral" | "fractal-mandala";
 
-interface Segment {
+interface TunnelSegment {
   id: number;
+  z: number;
   rotation: number;
+  scale: number;
+  geometry: {
+    type: "circle" | "triangle" | "square" | "pentagon" | "hexagon" | "star" | "spiral" | "mandala";
+    vertices: Array<{ x: number; y: number }>;
+    connections: Array<[number, number]>;
+  };
   color: string;
-  size: number;
-  distance: number;
-  shape: "circle" | "diamond" | "triangle" | "star";
+  glow: number;
 }
 
-const COLOR_PALETTES = {
-  cosmic: ["#8B5CF6", "#EC4899", "#06B6D4", "#10B981", "#F59E0B"],
-  aurora: ["#22D3EE", "#34D399", "#A78BFA", "#F472B6", "#FBBF24"],
-  sunset: ["#F97316", "#EF4444", "#EC4899", "#8B5CF6", "#F59E0B"],
-  ocean: ["#0EA5E9", "#06B6D4", "#14B8A6", "#3B82F6", "#6366F1"],
-  forest: ["#10B981", "#059669", "#84CC16", "#22C55E", "#4ADE80"],
+interface Camera {
+  x: number;
+  y: number;
+  z: number;
+  rotationX: number;
+  rotationY: number;
+  speed: number;
+}
+
+const TUNNEL_TYPES = {
+  "flower-of-life": {
+    name: "Flower of Life",
+    description: "Sacred geometry of creation and interconnectedness",
+    colors: ["#8B5CF6", "#EC4899", "#06B6D4", "#10B981", "#F59E0B"],
+    geometry: "circle"
+  },
+  "metatrons-cube": {
+    name: "Metatron's Cube",
+    description: "Archangel Metatron's sacred geometric pattern",
+    colors: ["#22D3EE", "#34D399", "#A78BFA", "#F472B6", "#FBBF24"],
+    geometry: "triangle"
+  },
+  "sri-yantra": {
+    name: "Sri Yantra",
+    description: "Ancient Hindu yantra for spiritual awakening",
+    colors: ["#F97316", "#EF4444", "#EC4899", "#8B5CF6", "#F59E0B"],
+    geometry: "triangle"
+  },
+  "merkaba": {
+    name: "Merkaba",
+    description: "Sacred geometric vehicle of light",
+    colors: ["#0EA5E9", "#06B6D4", "#14B8A6", "#3B82F6", "#6366F1"],
+    geometry: "star"
+  },
+  "golden-spiral": {
+    name: "Golden Spiral",
+    description: "Fibonacci sequence in sacred geometry",
+    colors: ["#10B981", "#059669", "#84CC16", "#22C55E", "#4ADE80"],
+    geometry: "spiral"
+  },
+  "fractal-mandala": {
+    name: "Fractal Mandala",
+    description: "Infinite self-similar sacred patterns",
+    colors: ["#8B5CF6", "#EC4899", "#06B6D4", "#10B981", "#F59E0B"],
+    geometry: "mandala"
+  }
 };
 
 export const Kaleidoscope = ({ isOpen, onClose }: KaleidoscopeProps) => {
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [pattern, setPattern] = useState<PatternType>("mandala");
-  const [colorPalette, setColorPalette] = useState<keyof typeof COLOR_PALETTES>("cosmic");
-  const [segments, setSegments] = useState<Segment[]>([]);
-  const [rotation, setRotation] = useState(0);
-  const [complexity, setComplexity] = useState(6);
-  const [speed, setSpeed] = useState(1);
+  const [tunnelType, setTunnelType] = useState<TunnelType>("flower-of-life");
+  const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 0, rotationX: 0, rotationY: 0, speed: 2 });
+  const [tunnelSegments, setTunnelSegments] = useState<TunnelSegment[]>([]);
+  const [isTraveling, setIsTraveling] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [depth, setDepth] = useState(0);
 
-  const colors = COLOR_PALETTES[colorPalette];
+  const tunnelData = TUNNEL_TYPES[tunnelType];
+  const colors = tunnelData.colors;
+  const animationRef = useRef<number>();
+  const keysPressed = useRef<Set<string>>(new Set());
 
-  // Generate segments based on pattern
-  const generateSegments = useCallback(() => {
-    const newSegments: Segment[] = [];
-    const numLayers = Math.floor(complexity);
-    const segmentsPerLayer = pattern === "mandala" ? 12 : pattern === "fractal" ? 8 : 6;
+  // Generate tunnel geometry based on type
+  const generateTunnelGeometry = useCallback(() => {
+    const segments: TunnelSegment[] = [];
+    const segmentCount = 50;
 
-    for (let layer = 0; layer < numLayers; layer++) {
-      for (let i = 0; i < segmentsPerLayer; i++) {
-        const angle = (360 / segmentsPerLayer) * i;
-        newSegments.push({
-          id: layer * segmentsPerLayer + i,
-          rotation: angle,
-          color: colors[(layer + i) % colors.length],
-          size: 20 + layer * 15,
-          distance: 50 + layer * 40,
-          shape: ["circle", "diamond", "triangle", "star"][i % 4] as Segment["shape"],
-        });
+    for (let i = 0; i < segmentCount; i++) {
+      const z = i * 100;
+      const rotation = (i * 15) % 360;
+      const scale = 1 + Math.sin(i * 0.2) * 0.3;
+
+      let geometry: TunnelSegment['geometry'];
+
+      switch (tunnelType) {
+        case "flower-of-life":
+          geometry = {
+            type: "circle",
+            vertices: Array.from({ length: 6 }, (_, j) => ({
+              x: Math.cos((j / 6) * Math.PI * 2) * 80 * scale,
+              y: Math.sin((j / 6) * Math.PI * 2) * 80 * scale
+            })),
+            connections: Array.from({ length: 6 }, (_, j) => [j, (j + 1) % 6] as [number, number])
+          };
+          break;
+
+        case "metatrons-cube":
+          geometry = {
+            type: "triangle",
+            vertices: [
+              { x: 0, y: -100 * scale },
+              { x: -87 * scale, y: 50 * scale },
+              { x: 87 * scale, y: 50 * scale }
+            ],
+            connections: [[0, 1], [1, 2], [2, 0]]
+          };
+          break;
+
+        case "sri-yantra":
+          geometry = {
+            type: "triangle",
+            vertices: [
+              { x: 0, y: -120 * scale },
+              { x: -104 * scale, y: 60 * scale },
+              { x: 104 * scale, y: 60 * scale }
+            ],
+            connections: [[0, 1], [1, 2], [2, 0]]
+          };
+          break;
+
+        case "merkaba":
+          geometry = {
+            type: "star",
+            vertices: Array.from({ length: 8 }, (_, j) => ({
+              x: Math.cos((j / 8) * Math.PI * 2) * (j % 2 === 0 ? 60 : 100) * scale,
+              y: Math.sin((j / 8) * Math.PI * 2) * (j % 2 === 0 ? 60 : 100) * scale
+            })),
+            connections: Array.from({ length: 8 }, (_, j) => [j, (j + 1) % 8] as [number, number])
+          };
+          break;
+
+        case "golden-spiral":
+          const phi = (1 + Math.sqrt(5)) / 2;
+          geometry = {
+            type: "spiral",
+            vertices: Array.from({ length: 20 }, (_, j) => {
+              const angle = j * 0.5;
+              const radius = Math.pow(phi, angle * 0.1) * 10 * scale;
+              return {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+              };
+            }),
+            connections: Array.from({ length: 19 }, (_, j) => [j, j + 1] as [number, number])
+          };
+          break;
+
+        case "fractal-mandala":
+          geometry = {
+            type: "mandala",
+            vertices: Array.from({ length: 12 }, (_, j) => ({
+              x: Math.cos((j / 12) * Math.PI * 2) * (50 + Math.sin(j * 2) * 30) * scale,
+              y: Math.sin((j / 12) * Math.PI * 2) * (50 + Math.sin(j * 2) * 30) * scale
+            })),
+            connections: Array.from({ length: 12 }, (_, j) => [j, (j + 1) % 12] as [number, number])
+          };
+          break;
+
+        default:
+          geometry = {
+            type: "circle",
+            vertices: [],
+            connections: []
+          };
       }
+
+      segments.push({
+        id: i,
+        z,
+        rotation,
+        scale,
+        geometry,
+        color: colors[i % colors.length],
+        glow: Math.sin(i * 0.3) * 0.5 + 0.5
+      });
     }
-    setSegments(newSegments);
-  }, [complexity, pattern, colors]);
+
+    setTunnelSegments(segments);
+  }, [tunnelType, colors]);
 
   useEffect(() => {
     if (isOpen) {
-      generateSegments();
+      generateTunnelGeometry();
     }
-  }, [isOpen, generateSegments]);
+  }, [isOpen, generateTunnelGeometry]);
 
-  // Animation loop
+  // Keyboard controls for tunnel navigation
   useEffect(() => {
-    if (!isPlaying || !isOpen) return;
+    if (!isOpen) return;
 
-    const interval = setInterval(() => {
-      setRotation(prev => (prev + speed) % 360);
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, isOpen, speed]);
-
-  const renderShape = (segment: Segment, index: number) => {
-    const baseStyle = {
-      position: "absolute" as const,
-      left: "50%",
-      top: "50%",
-      transform: `
-        translate(-50%, -50%)
-        rotate(${segment.rotation + rotation}deg)
-        translateY(-${segment.distance}px)
-      `,
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keysPressed.current.add(e.key.toLowerCase());
     };
 
-    switch (segment.shape) {
-      case "circle":
-        return (
-          <motion.div
-            key={segment.id}
-            style={baseStyle}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.6, 1, 0.6],
-            }}
-            transition={{
-              duration: 3 + index * 0.1,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <div
-              className="rounded-full"
-              style={{
-                width: segment.size,
-                height: segment.size,
-                background: `radial-gradient(circle, ${segment.color}80 0%, transparent 70%)`,
-                boxShadow: `0 0 ${segment.size / 2}px ${segment.color}40`,
-              }}
-            />
-          </motion.div>
-        );
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key.toLowerCase());
+    };
 
-      case "diamond":
-        return (
-          <motion.div
-            key={segment.id}
-            style={baseStyle}
-            animate={{
-              rotate: [0, 45, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 4 + index * 0.1,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <div
-              style={{
-                width: segment.size,
-                height: segment.size,
-                background: `linear-gradient(135deg, ${segment.color}60 0%, transparent 50%, ${segment.color}60 100%)`,
-                transform: "rotate(45deg)",
-                boxShadow: `0 0 ${segment.size / 2}px ${segment.color}30`,
-              }}
-            />
-          </motion.div>
-        );
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
-      case "triangle":
-        return (
-          <motion.div
-            key={segment.id}
-            style={baseStyle}
-            animate={{
-              rotate: [0, 60, 0],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: 5 + index * 0.1,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <div
-              style={{
-                width: 0,
-                height: 0,
-                borderLeft: `${segment.size / 2}px solid transparent`,
-                borderRight: `${segment.size / 2}px solid transparent`,
-                borderBottom: `${segment.size}px solid ${segment.color}70`,
-                filter: `drop-shadow(0 0 ${segment.size / 4}px ${segment.color}50)`,
-              }}
-            />
-          </motion.div>
-        );
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isOpen]);
 
-      case "star":
-        return (
-          <motion.div
-            key={segment.id}
-            style={baseStyle}
-            animate={{
-              scale: [0.8, 1.2, 0.8],
-              rotate: [0, 180, 360],
-            }}
-            transition={{
-              duration: 6 + index * 0.1,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <Sparkles
-              style={{
-                width: segment.size,
-                height: segment.size,
-                color: segment.color,
-                filter: `drop-shadow(0 0 ${segment.size / 3}px ${segment.color})`,
-              }}
-            />
-          </motion.div>
-        );
+  // Animation and navigation loop
+  useEffect(() => {
+    if (!isOpen) return;
 
-      default:
-        return null;
-    }
-  };
+    const animate = () => {
+      setDepth(prev => prev + camera.speed * 0.1);
 
-  // Sacred geometry overlay
-  const renderSacredGeometry = useMemo(() => {
-    if (pattern !== "sacred") return null;
+      // Handle keyboard navigation
+      setCamera(prev => {
+        let newX = prev.x;
+        let newY = prev.y;
+        let newRotationX = prev.rotationX;
+        let newRotationY = prev.rotationY;
+
+        if (keysPressed.current.has('arrowleft') || keysPressed.current.has('a')) {
+          newX -= 2;
+        }
+        if (keysPressed.current.has('arrowright') || keysPressed.current.has('d')) {
+          newX += 2;
+        }
+        if (keysPressed.current.has('arrowup') || keysPressed.current.has('w')) {
+          newY -= 2;
+        }
+        if (keysPressed.current.has('arrowdown') || keysPressed.current.has('s')) {
+          newY += 2;
+        }
+        if (keysPressed.current.has('q')) {
+          newRotationY -= 1;
+        }
+        if (keysPressed.current.has('e')) {
+          newRotationY += 1;
+        }
+
+        return {
+          ...prev,
+          x: newX,
+          y: newY,
+          rotationX: newRotationX,
+          rotationY: newRotationY,
+          z: prev.z + (isTraveling ? camera.speed : 0)
+        };
+      });
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isOpen, camera.speed, isTraveling]);
+
+  const renderTunnelSegment = (segment: TunnelSegment) => {
+    const cameraZ = camera.z + depth;
+    const relativeZ = segment.z - cameraZ;
+    const perspective = 1000 / (1000 + relativeZ);
+
+    if (perspective < 0.1 || relativeZ < -500) return null;
+
+    const screenX = (segment.geometry.vertices[0]?.x || 0) * perspective + camera.x;
+    const screenY = (segment.geometry.vertices[0]?.y || 0) * perspective + camera.y;
 
     return (
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox="0 0 400 400"
+      <motion.div
+        key={segment.id}
+        className="absolute"
+        style={{
+          left: '50%',
+          top: '50%',
+          transform: `translate(-50%, -50%) translate(${screenX}px, ${screenY}px) rotate(${segment.rotation + camera.rotationY}deg)`,
+          zIndex: Math.floor(relativeZ),
+        }}
+        animate={{
+          opacity: perspective,
+          scale: perspective * segment.scale,
+        }}
       >
-        {/* Flower of Life pattern */}
-        {[0, 60, 120, 180, 240, 300].map((angle, i) => (
-          <motion.circle
-            key={i}
-            cx={200 + Math.cos((angle * Math.PI) / 180) * 50}
-            cy={200 + Math.sin((angle * Math.PI) / 180) * 50}
-            r="50"
-            fill="none"
-            stroke={colors[i % colors.length]}
-            strokeWidth="1"
-            opacity="0.5"
-            animate={{
-              r: [50, 55, 50],
-              opacity: [0.3, 0.7, 0.3],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              delay: i * 0.2,
-            }}
-          />
-        ))}
-        <motion.circle
-          cx="200"
-          cy="200"
-          r="50"
-          fill="none"
-          stroke={colors[0]}
-          strokeWidth="1"
-          opacity="0.5"
-          animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ duration: 4, repeat: Infinity }}
+        {/* Render geometry based on type */}
+        <svg
+          width={200 * perspective}
+          height={200 * perspective}
+          className="absolute"
+          style={{
+            left: -100 * perspective,
+            top: -100 * perspective,
+          }}
+        >
+          {/* Connections */}
+          {segment.geometry.connections.map(([from, to], i) => {
+            const v1 = segment.geometry.vertices[from];
+            const v2 = segment.geometry.vertices[to];
+            if (!v1 || !v2) return null;
+
+            return (
+              <motion.line
+                key={i}
+                x1={v1.x + 100}
+                y1={v1.y + 100}
+                x2={v2.x + 100}
+                y2={v2.y + 100}
+                stroke={segment.color}
+                strokeWidth={2 * perspective}
+                opacity={segment.glow * 0.8}
+                animate={{
+                  opacity: [segment.glow * 0.5, segment.glow, segment.glow * 0.5],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.1,
+                }}
+              />
+            );
+          })}
+
+          {/* Vertices */}
+          {segment.geometry.vertices.map((vertex, i) => (
+            <motion.circle
+              key={i}
+              cx={vertex.x + 100}
+              cy={vertex.y + 100}
+              r={4 * perspective}
+              fill={segment.color}
+              animate={{
+                r: [4 * perspective, 6 * perspective, 4 * perspective],
+                opacity: [segment.glow * 0.6, segment.glow, segment.glow * 0.6],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                delay: i * 0.2,
+              }}
+            />
+          ))}
+        </svg>
+
+        {/* Glow effect */}
+        <motion.div
+          className="absolute rounded-full blur-xl"
+          style={{
+            width: 100 * perspective,
+            height: 100 * perspective,
+            left: -50 * perspective,
+            top: -50 * perspective,
+            background: `radial-gradient(circle, ${segment.color}40 0%, transparent 70%)`,
+          }}
+          animate={{
+            opacity: [0, segment.glow * 0.3, 0],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+          }}
         />
-      </svg>
+      </motion.div>
     );
-  }, [pattern, colors]);
+  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -261,11 +394,16 @@ export const Kaleidoscope = ({ isOpen, onClose }: KaleidoscopeProps) => {
     }
   };
 
+  const resetCamera = () => {
+    setCamera({ x: 0, y: 0, z: 0, rotationX: 0, rotationY: 0, speed: 2 });
+    setDepth(0);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
+          className="fixed inset-0 z-50 bg-black"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -290,147 +428,158 @@ export const Kaleidoscope = ({ isOpen, onClose }: KaleidoscopeProps) => {
             <Maximize2 className="w-5 h-5" />
           </Button>
 
-          {/* Main kaleidoscope container */}
-          <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-            {/* Background glow */}
+          {/* Tunnel view */}
+          <div className="relative w-full h-full overflow-hidden bg-gradient-to-b from-purple-900/20 to-black">
+            {/* Tunnel segments */}
+            {tunnelSegments.map(segment => renderTunnelSegment(segment))}
+
+            {/* Central light beam */}
             <motion.div
-              className="absolute inset-0"
+              className="absolute left-1/2 top-1/2 w-2 h-full bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent"
               style={{
-                background: `radial-gradient(circle at center, ${colors[0]}20 0%, transparent 50%)`,
+                transform: 'translateX(-50%) translateY(-50%)',
               }}
               animate={{
-                opacity: [0.3, 0.6, 0.3],
+                opacity: [0.2, 0.5, 0.2],
+                scaleX: [1, 1.2, 1],
               }}
               transition={{
-                duration: 5,
+                duration: 2,
                 repeat: Infinity,
               }}
             />
 
-            {/* Center point */}
+            {/* Navigation HUD */}
             <motion.div
-              className="absolute rounded-full"
-              style={{
-                width: 100,
-                height: 100,
-                background: `radial-gradient(circle, ${colors[0]} 0%, ${colors[1]} 50%, transparent 70%)`,
-              }}
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.8, 1, 0.8],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-              }}
-            />
+              className="absolute top-6 left-6 z-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: showControls ? 1 : 0.3 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="bg-black/60 backdrop-blur-md rounded-lg p-4 border border-white/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <Navigation className="w-4 h-4 text-cyan-400" />
+                  <span className="text-sm font-medium text-white">Tunnel Navigation</span>
+                </div>
 
-            {/* Segments */}
-            {segments.map((segment, index) => renderShape(segment, index))}
+                <div className="space-y-2 text-xs text-white/70">
+                  <div>Depth: {Math.floor(depth)} units</div>
+                  <div>Speed: {camera.speed.toFixed(1)}x</div>
+                  <div>Position: {Math.floor(camera.x)}, {Math.floor(camera.y)}</div>
+                </div>
 
-            {/* Sacred geometry overlay */}
-            {renderSacredGeometry}
-
-            {/* Outer ring */}
-            <motion.div
-              className="absolute rounded-full border-2 pointer-events-none"
-              style={{
-                width: 600,
-                height: 600,
-                borderColor: `${colors[2]}30`,
-              }}
-              animate={{
-                rotate: rotation,
-                scale: [1, 1.02, 1],
-              }}
-              transition={{
-                rotate: { duration: 0, ease: "linear" },
-                scale: { duration: 5, repeat: Infinity },
-              }}
-            />
-          </div>
-
-          {/* Controls panel */}
-          <motion.div
-            className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/60 backdrop-blur-md rounded-2xl p-6 border border-white/10"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="flex flex-col gap-4">
-              {/* Pattern selection */}
-              <div className="flex gap-2 justify-center">
-                {(["mandala", "fractal", "cosmic", "sacred", "aurora"] as PatternType[]).map((p) => (
+                <div className="flex gap-2 mt-3">
                   <Button
-                    key={p}
-                    variant={pattern === p ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setPattern(p)}
-                    className="capitalize"
+                    variant={isTraveling ? "default" : "outline"}
+                    onClick={() => setIsTraveling(!isTraveling)}
+                    className="text-xs"
                   >
-                    {p}
+                    {isTraveling ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                   </Button>
-                ))}
-              </div>
-
-              {/* Color palette selection */}
-              <div className="flex gap-2 justify-center">
-                {Object.keys(COLOR_PALETTES).map((palette) => (
                   <Button
-                    key={palette}
-                    variant="ghost"
                     size="sm"
-                    onClick={() => setColorPalette(palette as keyof typeof COLOR_PALETTES)}
-                    className={`flex gap-1 ${colorPalette === palette ? "ring-2 ring-white" : ""}`}
+                    variant="outline"
+                    onClick={resetCamera}
+                    className="text-xs"
                   >
-                    {COLOR_PALETTES[palette as keyof typeof COLOR_PALETTES].slice(0, 3).map((color, i) => (
-                      <div
-                        key={i}
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: color }}
-                      />
+                    <RotateCcw className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Tunnel info */}
+            <motion.div
+              className="absolute bottom-6 left-6 z-20"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: showControls ? 1 : 0.3 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="bg-black/60 backdrop-blur-md rounded-lg p-4 border border-white/10 max-w-xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="w-4 h-4 text-purple-400" />
+                  <Badge variant="outline" className="text-purple-400 border-purple-400/50">
+                    {tunnelData.name}
+                  </Badge>
+                </div>
+                <p className="text-xs text-white/70">{tunnelData.description}</p>
+              </div>
+            </motion.div>
+
+            {/* Controls panel */}
+            <motion.div
+              className="absolute bottom-6 right-6 z-20"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: showControls ? 1 : 0.3 }}
+              transition={{ delay: 0.7 }}
+            >
+              <div className="bg-black/60 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                <div className="flex flex-col gap-4">
+                  {/* Tunnel type selection */}
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {(Object.keys(TUNNEL_TYPES) as TunnelType[]).map((type) => (
+                      <Button
+                        key={type}
+                        variant={tunnelType === type ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTunnelType(type)}
+                        className="text-xs capitalize"
+                      >
+                        {TUNNEL_TYPES[type].name.split(' ')[0]}
+                      </Button>
                     ))}
-                  </Button>
-                ))}
-              </div>
+                  </div>
 
-              {/* Sliders */}
-              <div className="flex gap-6">
-                <div className="flex flex-col gap-2">
-                  <span className="text-xs text-white/70">Complexity</span>
-                  <Slider
-                    value={[complexity]}
-                    onValueChange={([v]) => setComplexity(v)}
-                    min={3}
-                    max={12}
-                    step={1}
-                    className="w-24"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-xs text-white/70">Speed</span>
-                  <Slider
-                    value={[speed]}
-                    onValueChange={([v]) => setSpeed(v)}
-                    min={0.1}
-                    max={5}
-                    step={0.1}
-                    className="w-24"
-                  />
+                  {/* Speed control */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs text-white/70">Travel Speed</span>
+                    <Slider
+                      value={[camera.speed]}
+                      onValueChange={([v]) => setCamera(prev => ({ ...prev, speed: v }))}
+                      min={0.5}
+                      max={10}
+                      step={0.5}
+                      className="w-32"
+                    />
+                  </div>
+
+                  {/* Movement hints */}
+                  <div className="text-xs text-white/50 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-cyan-400">WASD</span>
+                      <span>Move</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-cyan-400">QE</span>
+                      <span>Rotate</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-cyan-400">Space</span>
+                      <span>Travel</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </motion.div>
 
-              {/* Play/Pause */}
+            {/* Hide controls hint */}
+            <motion.div
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: showControls ? 0 : 0.7 }}
+              transition={{ duration: 0.3 }}
+            >
               <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="mx-auto"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowControls(!showControls)}
+                className="text-white/50 hover:text-white"
               >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                {showControls ? "Hide Controls" : "Show Controls"}
               </Button>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
