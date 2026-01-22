@@ -10,10 +10,12 @@ import { ModeToggle } from "./ModeToggle";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useAmbientAudio } from "@/hooks/useAmbientAudio";
 
+type Mode = "presence" | "breathing" | "constellation";
+
 export const SublimeExperience = () => {
   const [isEngaged, setIsEngaged] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [isBreathingMode, setIsBreathingMode] = useState(false);
+  const [currentMode, setCurrentMode] = useState<Mode>("presence");
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -35,7 +37,6 @@ export const SublimeExperience = () => {
     const y = (clientY - rect.top) / rect.height;
     setMousePos({ x, y });
 
-    // Calculate proximity to center
     const centerDist = Math.sqrt(Math.pow(x - 0.5, 2) + Math.pow(y - 0.5, 2));
     const proximity = Math.max(0, 1 - centerDist * 2);
     setProximity(proximity);
@@ -71,10 +72,18 @@ export const SublimeExperience = () => {
     heavyTap();
   }, [playConnectionTone, heavyTap]);
 
-  const toggleBreathingMode = useCallback(() => {
-    setIsBreathingMode(prev => !prev);
+  const handleModeChange = useCallback((mode: Mode) => {
+    setCurrentMode(mode);
     mediumTap();
   }, [mediumTap]);
+
+  const getModeHint = () => {
+    switch (currentMode) {
+      case "breathing": return "follow the rhythm";
+      case "constellation": return "watch them align";
+      default: return "tap icons to explore modes";
+    }
+  };
 
   return (
     <div 
@@ -89,13 +98,15 @@ export const SublimeExperience = () => {
     >
       {/* Controls */}
       <AudioToggle isMuted={isMuted} onToggle={toggleMute} />
-      <ModeToggle isBreathingMode={isBreathingMode} onToggle={toggleBreathingMode} />
+      <ModeToggle currentMode={currentMode} onModeChange={handleModeChange} />
 
       {/* Ambient background gradients */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 40% 15% / 0.5) 0%, transparent 60%)",
+          background: currentMode === "constellation"
+            ? "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 50% 20% / 0.6) 0%, transparent 60%)"
+            : "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 40% 15% / 0.5) 0%, transparent 60%)",
         }}
         animate={{
           opacity: isEngaged ? 0.8 : 0.4,
@@ -115,18 +126,25 @@ export const SublimeExperience = () => {
       <ParticleField />
       
       {/* Consciousness field - multiple orbs */}
-      <ConsciousnessField mousePos={mousePos} onConnection={handleConnection} />
+      <ConsciousnessField 
+        mousePos={mousePos} 
+        onConnection={handleConnection}
+        isConstellationMode={currentMode === "constellation"}
+      />
       
       {/* Breathing guide overlay */}
-      <BreathingGuide isActive={isBreathingMode} onPhaseChange={handleBreathPhase} />
+      <BreathingGuide 
+        isActive={currentMode === "breathing"} 
+        onPhaseChange={handleBreathPhase} 
+      />
       
       {/* Central presence container */}
       <div className="absolute inset-0 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ 
-            opacity: isBreathingMode ? 0.3 : 1, 
-            scale: 1 
+            opacity: currentMode === "presence" ? 1 : 0.2, 
+            scale: currentMode === "constellation" ? 0.6 : 1 
           }}
           transition={{ duration: 2, ease: "easeOut" }}
         >
@@ -135,7 +153,7 @@ export const SublimeExperience = () => {
       </div>
       
       {/* Ambient text */}
-      {!isBreathingMode && <AmbientText isActive={isEngaged} />}
+      {currentMode === "presence" && <AmbientText isActive={isEngaged} />}
       
       {/* Initial instruction */}
       {!hasInteracted && (
@@ -159,7 +177,7 @@ export const SublimeExperience = () => {
           style={{
             width: 200 + i * 100,
             height: 200 + i * 100,
-            border: "1px solid hsl(var(--primary) / 0.05)",
+            border: `1px solid hsl(var(--${currentMode === "constellation" ? "glow-violet" : "primary"}) / 0.05)`,
             left: "50%",
             top: "50%",
             x: "-50%",
@@ -178,15 +196,16 @@ export const SublimeExperience = () => {
         />
       ))}
 
-      {/* Breathing mode hint */}
-      {hasInteracted && !isBreathingMode && (
+      {/* Mode hint */}
+      {hasInteracted && (
         <motion.div
           className="absolute bottom-6 left-6 text-muted-foreground/50 text-xs"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 3 }}
+          key={currentMode}
         >
-          <span className="font-sans tracking-wide">tap wind icon to breathe</span>
+          <span className="font-sans tracking-wide">{getModeHint()}</span>
         </motion.div>
       )}
     </div>
