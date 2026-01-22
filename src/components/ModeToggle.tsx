@@ -1,30 +1,47 @@
 import { motion } from "framer-motion";
-import { Wind, Eye } from "lucide-react";
+import { Wind, Eye, Sparkles } from "lucide-react";
+
+type Mode = "presence" | "breathing" | "constellation";
 
 interface ModeToggleProps {
-  isBreathingMode: boolean;
-  onToggle: () => void;
+  currentMode: Mode;
+  onModeChange: (mode: Mode) => void;
 }
 
-export const ModeToggle = ({ isBreathingMode, onToggle }: ModeToggleProps) => {
+export const ModeToggle = ({ currentMode, onModeChange }: ModeToggleProps) => {
+  const modes: { mode: Mode; icon: typeof Eye; label: string }[] = [
+    { mode: "presence", icon: Eye, label: "Presence" },
+    { mode: "breathing", icon: Wind, label: "Breathe" },
+    { mode: "constellation", icon: Sparkles, label: "Sacred" },
+  ];
+
   return (
-    <motion.button
-      className="fixed top-6 left-6 z-50 p-3 rounded-full border border-primary/20 bg-background/30 backdrop-blur-sm"
-      onClick={onToggle}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
+    <motion.div
+      className="fixed top-6 left-6 z-50 flex gap-2"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 1.2 }}
     >
-      {isBreathingMode ? (
-        <Eye className="w-5 h-5 text-primary" />
-      ) : (
-        <Wind className="w-5 h-5 text-muted-foreground" />
-      )}
-      <span className="sr-only">
-        {isBreathingMode ? "Exit breathing mode" : "Enter breathing mode"}
-      </span>
-    </motion.button>
+      {modes.map(({ mode, icon: Icon, label }) => (
+        <motion.button
+          key={mode}
+          className={`p-3 rounded-full border backdrop-blur-sm transition-colors ${
+            currentMode === mode
+              ? "border-primary/50 bg-primary/20"
+              : "border-primary/20 bg-background/30"
+          }`}
+          onClick={() => onModeChange(mode)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Icon 
+            className={`w-5 h-5 ${
+              currentMode === mode ? "text-primary" : "text-muted-foreground"
+            }`} 
+          />
+          <span className="sr-only">{label}</span>
+        </motion.button>
+      ))}
+    </motion.div>
   );
 };
