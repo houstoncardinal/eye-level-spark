@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, lazy, Suspense, useMemo, memo } from "react";
 import { motion } from "framer-motion";
 import { ParticleField } from "./ParticleField";
 import { PresenceOrb } from "./PresenceOrb";
@@ -8,77 +8,96 @@ import { ConsciousnessField } from "./ConsciousnessField";
 import { CosmicUniverse } from "./CosmicUniverse";
 import { AudioToggle } from "./AudioToggle";
 import { ModeToggle } from "./ModeToggle";
-import { SettingsPanel } from "./SettingsPanel";
-import { StatisticsDashboard } from "./StatisticsDashboard";
-import { SoundscapeMixer } from "./SoundscapeMixer";
-import { GuidedSessions } from "./GuidedSessions";
-import { WellnessDashboard } from "./WellnessDashboard";
-import { BinauralBeatsPanel } from "./BinauralBeatsPanel";
-import { MeditationGame } from "./MeditationGame";
-import { AICoach } from "./AICoach";
-import { SpaceShip } from "./SpaceShip";
-import { PsychicLab } from "./PsychicLab";
-import { QuantumPortal } from "./QuantumPortal";
-import { Settings, BarChart3, Volume2, Star, Play, Pause, Heart, Brain, Gamepad2, Sparkles, Rocket, Eye, Atom } from "lucide-react";
+import { Settings, BarChart3, Volume2, Star, Heart, Brain, Gamepad2, Sparkles, Rocket, Eye, Atom, Palette, Zap, Moon, Target, Waves, Radio, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useAmbientAudio } from "@/hooks/useAmbientAudio";
 import { useSessionTimer } from "@/hooks/useSessionTimer";
-import { useMeditationGame } from "@/hooks/useMeditationGame";
-import { useEffect } from "react";
+
+// Lazy load all modal components for faster initial load
+const SettingsPanel = lazy(() => import("./SettingsPanel").then(m => ({ default: m.SettingsPanel })));
+const StatisticsDashboard = lazy(() => import("./StatisticsDashboard").then(m => ({ default: m.StatisticsDashboard })));
+const SoundscapeMixer = lazy(() => import("./SoundscapeMixer").then(m => ({ default: m.SoundscapeMixer })));
+const GuidedSessions = lazy(() => import("./GuidedSessions").then(m => ({ default: m.GuidedSessions })));
+const WellnessDashboard = lazy(() => import("./WellnessDashboard").then(m => ({ default: m.WellnessDashboard })));
+const BinauralBeatsPanel = lazy(() => import("./BinauralBeatsPanel").then(m => ({ default: m.BinauralBeatsPanel })));
+const MeditationGame = lazy(() => import("./MeditationGame").then(m => ({ default: m.MeditationGame })));
+const AICoach = lazy(() => import("./AICoach").then(m => ({ default: m.AICoach })));
+const SpaceShip = lazy(() => import("./SpaceShip").then(m => ({ default: m.SpaceShip })));
+const PsychicLab = lazy(() => import("./PsychicLab").then(m => ({ default: m.PsychicLab })));
+const QuantumPortal = lazy(() => import("./QuantumPortal").then(m => ({ default: m.QuantumPortal })));
+const Kaleidoscope = lazy(() => import("./Kaleidoscope").then(m => ({ default: m.Kaleidoscope })));
+const ChakraFlow = lazy(() => import("./ChakraFlow").then(m => ({ default: m.ChakraFlow })));
+const DreamJournal = lazy(() => import("./DreamJournal").then(m => ({ default: m.DreamJournal })));
+const ManifestationBoard = lazy(() => import("./ManifestationBoard").then(m => ({ default: m.ManifestationBoard })));
+const SolfeggioHealing = lazy(() => import("./SolfeggioHealing").then(m => ({ default: m.SolfeggioHealing })));
+const TimeWarp = lazy(() => import("./TimeWarp").then(m => ({ default: m.TimeWarp })));
+const AchievementsPanel = lazy(() => import("./AchievementsPanel").then(m => ({ default: m.AchievementsPanel })));
+const CosmicRadio = lazy(() => import("./CosmicRadio").then(m => ({ default: m.CosmicRadio })));
 
 type Mode = "presence" | "breathing" | "constellation";
+
+// Memoized control button component
+const ControlButton = memo(({ icon: Icon, onClick }: { icon: React.ElementType; onClick: () => void }) => (
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={onClick}
+    className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90 will-change-transform"
+  >
+    <Icon className="w-4 h-4" />
+  </Button>
+));
+ControlButton.displayName = "ControlButton";
+
+// Throttle helper for mouse movements
+const throttle = <T extends (...args: unknown[]) => void>(fn: T, delay: number) => {
+  let lastCall = 0;
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      fn(...args);
+    }
+  };
+};
+
+// Loading fallback - minimal
+const LoadingFallback = () => null;
 
 export const SublimeExperience = () => {
   const [isEngaged, setIsEngaged] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [currentMode, setCurrentMode] = useState<Mode>("presence");
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
-  const [showSettings, setShowSettings] = useState(false);
-  const [showStatistics, setShowStatistics] = useState(false);
-  const [showSoundscape, setShowSoundscape] = useState(false);
-  const [showGuidedSessions, setShowGuidedSessions] = useState(false);
-  const [showWellness, setShowWellness] = useState(false);
-  const [showBinaural, setShowBinaural] = useState(false);
-  const [showGame, setShowGame] = useState(false);
-  const [showAICoach, setShowAICoach] = useState(false);
-  const [showSpaceShip, setShowSpaceShip] = useState(false);
-  const [showPsychicLab, setShowPsychicLab] = useState(false);
-  const [showQuantumPortal, setShowQuantumPortal] = useState(false);
+
+  // Modal states - only loaded when opened
+  const [activeModal, setActiveModal] = useState<string | null>(null);
   const [cosmicDepth, setCosmicDepth] = useState(0);
-  const [showCosmicNavigation, setShowCosmicNavigation] = useState(false);
+
   const [settings, setSettings] = useState({
     theme: "cosmic",
     volume: 0.7,
     hapticEnabled: true,
-    particleDensity: 100,
+    particleDensity: 60, // Reduced for performance
     breathingGuideEnabled: true,
     ambientTextEnabled: true,
     sessionDuration: 15,
     autoStartBreathing: false,
   });
-  const containerRef = useRef<HTMLDivElement>(null);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const { lightTap, mediumTap, heavyTap } = useHaptic();
   const { isMuted, toggleMute, setProximity, playBreathTone, playConnectionTone } = useAmbientAudio();
   const { stats, startSession } = useSessionTimer();
-  const { completeSession: gameCompleteSession, updateStreak, exploreCosmic } = useMeditationGame();
 
-  // Global audio mute function
-  const muteAllAudio = () => {
-    // Mute ambient audio
-    if (!isMuted) {
-      toggleMute();
+  // Memoized mute all function
+  const muteAllAudio = useCallback(() => {
+    if (!isMuted) toggleMute();
+    if (activeModal === "soundscape" || activeModal === "binaural") {
+      setActiveModal(null);
     }
-
-    // Close any open audio panels to trigger cleanup
-    if (showSoundscape) {
-      setShowSoundscape(false);
-    }
-    if (showBinaural) {
-      setShowBinaural(false);
-    }
-  };
+  }, [isMuted, toggleMute, activeModal]);
 
   const handleInteraction = useCallback(() => {
     if (!hasInteracted) {
@@ -88,17 +107,19 @@ export const SublimeExperience = () => {
     setIsEngaged(true);
   }, [hasInteracted, mediumTap]);
 
-  const handleMove = useCallback((clientX: number, clientY: number) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (clientX - rect.left) / rect.width;
-    const y = (clientY - rect.top) / rect.height;
-    setMousePos({ x, y });
+  // Throttled mouse move handler for 60fps
+  const handleMove = useMemo(() =>
+    throttle((clientX: number, clientY: number) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = (clientX - rect.left) / rect.width;
+      const y = (clientY - rect.top) / rect.height;
+      setMousePos({ x, y });
 
-    const centerDist = Math.sqrt(Math.pow(x - 0.5, 2) + Math.pow(y - 0.5, 2));
-    const proximity = Math.max(0, 1 - centerDist * 2);
-    setProximity(proximity);
-  }, [setProximity]);
+      const centerDist = Math.sqrt((x - 0.5) ** 2 + (y - 0.5) ** 2);
+      setProximity(Math.max(0, 1 - centerDist * 2));
+    }, 16), // ~60fps
+  [setProximity]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     handleMove(e.clientX, e.clientY);
@@ -108,9 +129,8 @@ export const SublimeExperience = () => {
     if (e.touches.length > 0) {
       const touch = e.touches[0];
       handleMove(touch.clientX, touch.clientY);
-      lightTap();
     }
-  }, [handleMove, lightTap]);
+  }, [handleMove]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     handleInteraction();
@@ -135,18 +155,49 @@ export const SublimeExperience = () => {
     mediumTap();
   }, [mediumTap]);
 
-  const getModeHint = () => {
+  const getModeHint = useMemo(() => {
     switch (currentMode) {
       case "breathing": return "follow the rhythm";
       case "constellation": return "watch them align";
       default: return "tap icons to explore modes";
     }
-  };
+  }, [currentMode]);
+
+  // Memoized background style
+  const backgroundStyle = useMemo(() => ({
+    background: currentMode === "constellation"
+      ? "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 50% 20% / 0.6) 0%, transparent 60%)"
+      : "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 40% 15% / 0.5) 0%, transparent 60%)",
+  }), [currentMode]);
+
+  // Control buttons config
+  const controls = useMemo(() => [
+    { id: "settings", icon: Settings },
+    { id: "statistics", icon: BarChart3 },
+    { id: "soundscape", icon: Volume2 },
+    { id: "guided", icon: Star },
+    { id: "wellness", icon: Heart },
+    { id: "binaural", icon: Brain },
+    { id: "game", icon: Gamepad2 },
+    { id: "coach", icon: Sparkles },
+    { id: "psychic", icon: Eye },
+    { id: "quantum", icon: Atom },
+    { id: "kaleidoscope", icon: Palette },
+    { id: "chakra", icon: Zap },
+    { id: "dream", icon: Moon },
+    { id: "manifest", icon: Target },
+    { id: "solfeggio", icon: Waves },
+    { id: "timewarp", icon: Sparkles },
+    { id: "radio", icon: Radio },
+    { id: "achievements", icon: Trophy },
+  ], []);
+
+  const closeModal = useCallback(() => setActiveModal(null), []);
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="relative h-full w-full cosmic-bg overflow-hidden cursor-default touch-none"
+      className="relative h-full w-full cosmic-bg overflow-hidden cursor-default touch-none will-change-auto"
       onMouseEnter={handleInteraction}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setIsEngaged(false)}
@@ -158,153 +209,66 @@ export const SublimeExperience = () => {
       <AudioToggle isMuted={isMuted} onToggle={toggleMute} onStopAll={muteAllAudio} />
       <ModeToggle currentMode={currentMode} onModeChange={handleModeChange} />
 
-      {/* New Feature Controls */}
-      <div className="absolute top-6 right-6 flex flex-col gap-2 z-10">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowSettings(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Settings className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowStatistics(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <BarChart3 className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowSoundscape(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Volume2 className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowGuidedSessions(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Star className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowWellness(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Heart className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowBinaural(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Brain className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowGame(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Gamepad2 className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowAICoach(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Sparkles className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowPsychicLab(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowQuantumPortal(true)}
-          className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-        >
-          <Atom className="w-4 h-4" />
-        </Button>
+      {/* Feature Controls - Scrollable */}
+      <div className="absolute top-6 right-6 flex flex-col gap-1.5 z-10 max-h-[80vh] overflow-y-auto scrollbar-hide">
+        {controls.map(({ id, icon }) => (
+          <ControlButton key={id} icon={icon} onClick={() => setActiveModal(id)} />
+        ))}
       </div>
 
-      {/* Ambient background gradients */}
+      {/* Background - GPU accelerated */}
       <motion.div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: currentMode === "constellation"
-            ? "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 50% 20% / 0.6) 0%, transparent 60%)"
-            : "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 40% 15% / 0.5) 0%, transparent 60%)",
-        }}
-        animate={{
-          opacity: isEngaged ? 0.8 : 0.4,
-        }}
+        className="absolute inset-0 pointer-events-none will-change-opacity"
+        style={backgroundStyle}
+        animate={{ opacity: isEngaged ? 0.8 : 0.4 }}
         transition={{ duration: 1.5 }}
       />
-      
-      {/* Vignette overlay */}
-      <div 
+
+      {/* Vignette - static, no animation */}
+      <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: "radial-gradient(ellipse 70% 70% at 50% 50%, transparent 30%, hsl(230 30% 3%) 100%)",
         }}
       />
-      
-      {/* Particle field layer */}
-      <ParticleField />
 
-      {/* Cosmic Universe - stars, planets, nebulae, portals */}
+      {/* Core visual layers */}
+      <ParticleField />
       <CosmicUniverse
         mousePos={mousePos}
         isConstellationMode={currentMode === "constellation"}
         engagement={isEngaged ? 1 : 0}
         enableNavigation={true}
       />
-
-      {/* Consciousness field - multiple orbs */}
       <ConsciousnessField
         mousePos={mousePos}
         onConnection={handleConnection}
         isConstellationMode={currentMode === "constellation"}
       />
-      
-      {/* Breathing guide overlay */}
-      <BreathingGuide 
-        isActive={currentMode === "breathing"} 
-        onPhaseChange={handleBreathPhase} 
+
+      {/* Breathing guide */}
+      <BreathingGuide
+        isActive={currentMode === "breathing"}
+        onPhaseChange={handleBreathPhase}
       />
-      
-      {/* Central presence container */}
+
+      {/* Central presence */}
       <div className="absolute inset-0 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ 
-            opacity: currentMode === "presence" ? 1 : 0.2, 
-            scale: currentMode === "constellation" ? 0.6 : 1 
+          animate={{
+            opacity: currentMode === "presence" ? 1 : 0.2,
+            scale: currentMode === "constellation" ? 0.6 : 1
           }}
           transition={{ duration: 2, ease: "easeOut" }}
         >
           <PresenceOrb />
         </motion.div>
       </div>
-      
-      {/* Ambient text */}
+
+      {/* Ambient text - conditional */}
       {currentMode === "presence" && <AmbientText isActive={isEngaged} />}
-      
+
       {/* Initial instruction */}
       {!hasInteracted && (
         <motion.div
@@ -318,15 +282,15 @@ export const SublimeExperience = () => {
           </p>
         </motion.div>
       )}
-      
-      {/* Ambient floating elements */}
-      {[...Array(5)].map((_, i) => (
+
+      {/* Ambient rings - reduced count */}
+      {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          className="absolute rounded-full pointer-events-none"
+          className="absolute rounded-full pointer-events-none will-change-transform"
           style={{
-            width: 200 + i * 100,
-            height: 200 + i * 100,
+            width: 250 + i * 150,
+            height: 250 + i * 150,
             border: `1px solid hsl(var(--${currentMode === "constellation" ? "glow-violet" : "primary"}) / 0.05)`,
             left: "50%",
             top: "50%",
@@ -336,10 +300,10 @@ export const SublimeExperience = () => {
           animate={{
             scale: [1, 1.1, 1],
             opacity: [0.1, 0.2, 0.1],
-            rotate: [0, 360],
+            rotate: 360,
           }}
           transition={{
-            duration: 20 + i * 5,
+            duration: 25 + i * 8,
             repeat: Infinity,
             ease: "linear",
           }}
@@ -353,13 +317,12 @@ export const SublimeExperience = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 3 }}
-          key={currentMode}
         >
-          <span className="font-sans tracking-wide">{getModeHint()}</span>
+          <span className="font-sans tracking-wide">{getModeHint}</span>
         </motion.div>
       )}
 
-      {/* Cosmic Navigation - appears when deeply engaged */}
+      {/* Cosmic Navigation */}
       {isEngaged && hasInteracted && (
         <motion.div
           className="absolute bottom-20 left-6 z-20"
@@ -368,121 +331,116 @@ export const SublimeExperience = () => {
           transition={{ delay: 5 }}
         >
           <div className="flex flex-col gap-2">
-            <motion.p
-              className="text-xs text-primary/70 font-mono tracking-wider"
-              animate={{
-                opacity: [0.5, 1, 0.5],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-              }}
-            >
+            <p className="text-xs text-primary/70 font-mono tracking-wider">
               COSMIC DEPTH: {cosmicDepth.toFixed(1)}
-            </motion.p>
-
+            </p>
             <div className="flex gap-1">
-              {['Nebula', 'Void', 'Core', 'Event Horizon'].map((region, i) => (
-                <motion.button
+              {['Nebula', 'Void', 'Core', 'Horizon'].map((region, i) => (
+                <button
                   key={region}
-                  className="px-2 py-1 text-xs bg-background/20 backdrop-blur-sm border border-primary/20 rounded hover:border-primary/50 transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  className={`px-2 py-1 text-xs bg-background/20 backdrop-blur-sm border rounded transition-colors ${
+                    cosmicDepth >= i * 0.25 && cosmicDepth < (i + 1) * 0.25
+                      ? 'border-primary/60'
+                      : 'border-primary/20 hover:border-primary/40'
+                  }`}
                   onClick={() => {
                     setCosmicDepth(i * 0.25);
                     mediumTap();
                   }}
-                  animate={{
-                    borderColor: cosmicDepth >= i * 0.25 && cosmicDepth < (i + 1) * 0.25
-                      ? 'hsl(var(--primary) / 0.6)'
-                      : 'hsl(var(--primary) / 0.2)',
-                  }}
                 >
                   {region}
-                </motion.button>
+                </button>
               ))}
             </div>
-
-            {/* Spaceship Launch Button */}
-            <motion.button
+            <button
               className="px-3 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-500/50 rounded-lg hover:bg-blue-500/30 transition-colors flex items-center gap-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               onClick={() => {
-                setShowSpaceShip(true);
+                setActiveModal("spaceship");
                 heavyTap();
               }}
             >
               <Rocket className="w-4 h-4 text-blue-400" />
               <span className="text-xs font-medium">Launch Ship</span>
-            </motion.button>
+            </button>
           </div>
         </motion.div>
       )}
 
-      {/* Modal Components */}
-      <SettingsPanel
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        settings={settings}
-        onSettingsChange={setSettings}
-      />
-
-      <StatisticsDashboard
-        isOpen={showStatistics}
-        onClose={() => setShowStatistics(false)}
-        stats={stats}
-      />
-
-      <SoundscapeMixer
-        isOpen={showSoundscape}
-        onClose={() => setShowSoundscape(false)}
-        masterVolume={settings.volume}
-        onVolumeChange={(volume) => setSettings(prev => ({ ...prev, volume }))}
-      />
-
-      <GuidedSessions
-        isOpen={showGuidedSessions}
-        onClose={() => setShowGuidedSessions(false)}
-        onStartSession={startSession}
-      />
-
-      <WellnessDashboard
-        isOpen={showWellness}
-        onClose={() => setShowWellness(false)}
-      />
-
-      <BinauralBeatsPanel
-        isOpen={showBinaural}
-        onClose={() => setShowBinaural(false)}
-      />
-
-      <MeditationGame
-        isOpen={showGame}
-        onClose={() => setShowGame(false)}
-      />
-
-      <AICoach
-        isOpen={showAICoach}
-        onClose={() => setShowAICoach(false)}
-      />
-
-      <SpaceShip
-        isActive={showSpaceShip}
-        onClose={() => setShowSpaceShip(false)}
-        cosmicDepth={cosmicDepth}
-        onDepthChange={setCosmicDepth}
-      />
-
-      <PsychicLab
-        isOpen={showPsychicLab}
-        onClose={() => setShowPsychicLab(false)}
-      />
-
-      <QuantumPortal
-        isOpen={showQuantumPortal}
-        onClose={() => setShowQuantumPortal(false)}
-      />
+      {/* Lazy-loaded Modals - only render when active */}
+      <Suspense fallback={<LoadingFallback />}>
+        {activeModal === "settings" && (
+          <SettingsPanel
+            isOpen={true}
+            onClose={closeModal}
+            settings={settings}
+            onSettingsChange={setSettings}
+          />
+        )}
+        {activeModal === "statistics" && (
+          <StatisticsDashboard isOpen={true} onClose={closeModal} stats={stats} />
+        )}
+        {activeModal === "soundscape" && (
+          <SoundscapeMixer
+            isOpen={true}
+            onClose={closeModal}
+            masterVolume={settings.volume}
+            onVolumeChange={(volume) => setSettings(prev => ({ ...prev, volume }))}
+          />
+        )}
+        {activeModal === "guided" && (
+          <GuidedSessions isOpen={true} onClose={closeModal} onStartSession={startSession} />
+        )}
+        {activeModal === "wellness" && (
+          <WellnessDashboard isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "binaural" && (
+          <BinauralBeatsPanel isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "game" && (
+          <MeditationGame isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "coach" && (
+          <AICoach isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "spaceship" && (
+          <SpaceShip
+            isActive={true}
+            onClose={closeModal}
+            cosmicDepth={cosmicDepth}
+            onDepthChange={setCosmicDepth}
+          />
+        )}
+        {activeModal === "psychic" && (
+          <PsychicLab isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "quantum" && (
+          <QuantumPortal isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "kaleidoscope" && (
+          <Kaleidoscope isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "chakra" && (
+          <ChakraFlow isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "dream" && (
+          <DreamJournal isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "manifest" && (
+          <ManifestationBoard isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "solfeggio" && (
+          <SolfeggioHealing isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "timewarp" && (
+          <TimeWarp isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "radio" && (
+          <CosmicRadio isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "achievements" && (
+          <AchievementsPanel isOpen={true} onClose={closeModal} />
+        )}
+      </Suspense>
     </div>
   );
 };

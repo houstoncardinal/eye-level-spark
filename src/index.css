@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400&display=swap');
 
 /* Sublime Presence - Design System */
 
@@ -111,13 +111,41 @@
   .animate-breathe {
     animation: breathe 6s ease-in-out infinite;
   }
-  
+
   .animate-float {
     animation: float 8s ease-in-out infinite;
   }
-  
+
   .animate-pulse-slow {
     animation: pulse-slow 4s ease-in-out infinite;
+  }
+
+  /* Performance utilities */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gpu-accelerate {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .reduce-motion {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe {
+      animation: none !important;
+      transition: none !important;
+    }
   }
 }
 
