@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, memo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Orb {
   id: number;
@@ -96,14 +97,17 @@ const SACRED_PATTERNS: GeometryPattern[] = [
   },
 ];
 
-const ORB_COUNT = 7;
+const ORB_COUNT_DESKTOP = 7;
+const ORB_COUNT_MOBILE = 4;
 const CONNECTION_THRESHOLD = 0.25;
 
-export const ConsciousnessField = ({ 
-  mousePos, 
-  onConnection, 
-  isConstellationMode = false 
+export const ConsciousnessField = memo(({
+  mousePos,
+  onConnection,
+  isConstellationMode = false
 }: ConsciousnessFieldProps) => {
+  const isMobile = useIsMobile();
+  const ORB_COUNT = isMobile ? ORB_COUNT_MOBILE : ORB_COUNT_DESKTOP;
   const [orbs, setOrbs] = useState<Orb[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [currentPattern, setCurrentPattern] = useState(0);
@@ -111,7 +115,6 @@ export const ConsciousnessField = ({
   const [geometryConnections, setGeometryConnections] = useState<[number, number][]>([]);
   const animationRef = useRef<number>();
   const lastConnectionRef = useRef<number>(0);
-  const patternTransitionRef = useRef<number>(0);
 
   useEffect(() => {
     const initialOrbs: Orb[] = Array.from({ length: ORB_COUNT }, (_, i) => ({
@@ -434,4 +437,6 @@ export const ConsciousnessField = ({
       })}
     </div>
   );
-};
+});
+
+ConsciousnessField.displayName = 'ConsciousnessField';
