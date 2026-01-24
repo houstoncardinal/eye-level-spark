@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings, X, Palette, Volume2, Zap, Eye, Timer, Sparkles, Star, Moon, Sun, Infinity, Crown, Wand2, Gem, Orbit, Atom, Flower2, Heart } from "lucide-react";
+import { Settings, X, Palette, Volume2, Zap, Eye, Timer, Sparkles, Star, Moon, Sun, Infinity as InfinityIcon, Crown, Wand2, Gem, Orbit, Atom, Flower2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -76,7 +76,7 @@ const REALITIES = [
     name: "Void Essence",
     description: "Pure potential of infinite nothingness",
     colors: ["hsl(0 0% 15%)", "hsl(0 0% 70%)"],
-    icon: Infinity,
+    icon: InfinityIcon,
     energy: "Quantum",
     vibration: 963
   }
@@ -267,11 +267,11 @@ export const SettingsPanel = ({ isOpen, onClose, settings, onSettingsChange }: S
                   transition={{ delay: 1.5, type: "spring", stiffness: 200 }}
                 >
                   <div className="flex items-center justify-center gap-3 mb-4">
-                    <Infinity className="w-8 h-8 text-cyan-400 animate-pulse" />
+                    <InfinityIcon className="w-8 h-8 text-cyan-400 animate-pulse" />
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                       Quantum Manifestation Nexus
                     </h1>
-                    <Infinity className="w-8 h-8 text-cyan-400 animate-pulse" />
+                    <InfinityIcon className="w-8 h-8 text-cyan-400 animate-pulse" />
                   </div>
                   <p className="text-white/70 text-lg">
                     Welcome to the infinite realms of creation and manifestation

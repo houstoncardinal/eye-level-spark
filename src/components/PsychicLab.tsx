@@ -72,6 +72,7 @@ const INTUITION_EXERCISES: IntuitionExercise[] = [
   },
   {
     id: "timeline_jumping",
+    name: "Timeline Jumping",
     description: "Access different timeline possibilities",
     type: "timeline",
     duration: 20,
