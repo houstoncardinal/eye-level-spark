@@ -6,6 +6,10 @@ import { AmbientText } from "./AmbientText";
 import { BreathingGuide } from "./BreathingGuide";
 import { ConsciousnessField } from "./ConsciousnessField";
 import { CosmicUniverse } from "./CosmicUniverse";
+import { AuroraWaves } from "./AuroraWaves";
+import { NebulaCloud } from "./NebulaCloud";
+import { DynamicLighting } from "./DynamicLighting";
+import { CosmicRipples } from "./CosmicRipples";
 import { AudioToggle } from "./AudioToggle";
 import { ModeToggle } from "./ModeToggle";
 import { Settings, BarChart3, Volume2, Star, Heart, Brain, Gamepad2, Sparkles, Rocket, Eye, Atom, Palette, Zap, Moon, Target, Waves, Radio, Trophy } from "lucide-react";
@@ -232,6 +236,21 @@ export const SublimeExperience = () => {
         }}
       />
 
+      {/* Enhanced visual atmosphere layers */}
+      <NebulaCloud 
+        mousePos={mousePos} 
+        engagement={isEngaged ? 1 : 0} 
+      />
+      <AuroraWaves 
+        intensity={isEngaged ? 0.7 : 0.4} 
+        colorScheme={currentMode === "constellation" ? "ethereal" : currentMode === "breathing" ? "northern" : "cosmic"} 
+      />
+      <DynamicLighting 
+        mousePos={mousePos} 
+        isEngaged={isEngaged} 
+        mode={currentMode} 
+      />
+
       {/* Core visual layers */}
       <ParticleField />
       <CosmicUniverse
@@ -239,6 +258,10 @@ export const SublimeExperience = () => {
         isConstellationMode={currentMode === "constellation"}
         engagement={isEngaged ? 1 : 0}
         enableNavigation={true}
+      />
+      <CosmicRipples 
+        containerRef={containerRef} 
+        color={currentMode === "constellation" ? "hsl(270 70% 60%)" : "hsl(35 80% 55%)"} 
       />
       <ConsciousnessField
         mousePos={mousePos}

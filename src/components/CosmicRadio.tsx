@@ -485,12 +485,12 @@ export const CosmicRadio = ({ isOpen, onClose }: CosmicRadioProps) => {
                       key={station.id}
                       className={`p-4 rounded-xl text-left transition-all ${
                         isActive
-                          ? "bg-white/15 ring-2"
-                          : "bg-white/5 hover:bg-white/10"
-                      }`}
-                      style={{
-                        ringColor: isActive ? station.color : undefined,
-                      }}
+                      ? "bg-white/15 ring-2"
+                      : "bg-white/5 hover:bg-white/10"
+                    }`}
+                    style={{
+                      borderColor: isActive ? station.color : undefined,
+                    }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => playStation(station)}

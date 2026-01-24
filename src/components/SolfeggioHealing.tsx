@@ -270,7 +270,7 @@ export const SolfeggioHealing = ({ isOpen, onClose }: SolfeggioHealingProps) => 
                             : "bg-white/5 hover:bg-white/10"
                         }`}
                         style={{
-                          ringColor: isActive ? freq.color : undefined,
+                          borderColor: isActive ? freq.color : undefined,
                           backgroundColor: isActive ? `${freq.color}20` : undefined,
                         }}
                         whileHover={{ scale: 1.02 }}
