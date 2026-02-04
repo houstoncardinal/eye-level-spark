@@ -12,8 +12,7 @@ import { DynamicLighting } from "./DynamicLighting";
 import { CosmicRipples } from "./CosmicRipples";
 import { AudioToggle } from "./AudioToggle";
 import { ModeToggle } from "./ModeToggle";
-import { Settings, BarChart3, Volume2, Star, Heart, Brain, Gamepad2, Sparkles, Rocket, Eye, Atom, Palette, Zap, Moon, Target, Waves, Radio, Trophy } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Settings, BarChart3, Volume2, Star, Heart, Brain, Gamepad2, Sparkles, Rocket, Eye, Atom, Palette, Zap, Moon, Target, Waves, Radio, Trophy, Navigation } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useAmbientAudio } from "@/hooks/useAmbientAudio";
 import { useSessionTimer } from "@/hooks/useSessionTimer";
@@ -38,19 +37,40 @@ const SolfeggioHealing = lazy(() => import("./SolfeggioHealing").then(m => ({ de
 const TimeWarp = lazy(() => import("./TimeWarp").then(m => ({ default: m.TimeWarp })));
 const AchievementsPanel = lazy(() => import("./AchievementsPanel").then(m => ({ default: m.AchievementsPanel })));
 const CosmicRadio = lazy(() => import("./CosmicRadio").then(m => ({ default: m.CosmicRadio })));
+const TunnelTravel = lazy(() => import("./TunnelTravel").then(m => ({ default: m.TunnelTravel })));
 
 type Mode = "presence" | "breathing" | "constellation";
 
-// Memoized control button component
-const ControlButton = memo(({ icon: Icon, onClick }: { icon: React.ElementType; onClick: () => void }) => (
-  <Button
-    variant="outline"
-    size="sm"
+// Memoized control button component with luxurious glowing labels
+const ControlButton = memo(({
+  icon: Icon,
+  onClick,
+  label,
+  color = "from-purple-400 to-pink-300"
+}: {
+  icon: React.ElementType;
+  onClick: () => void;
+  label?: string;
+  color?: string;
+}) => (
+  <button
     onClick={onClick}
-    className="bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90 will-change-transform"
+    className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:border-white/30 hover:bg-black/60 transition-all duration-300 will-change-transform hover:scale-105"
   >
-    <Icon className="w-4 h-4" />
-  </Button>
+    <div className={`p-1.5 rounded-lg bg-gradient-to-br ${color} shadow-lg`}>
+      <Icon className="w-3.5 h-3.5 text-black/80" />
+    </div>
+    {label && (
+      <span
+        className={`text-xs font-medium tracking-wide bg-gradient-to-r ${color} bg-clip-text text-transparent opacity-80 group-hover:opacity-100 transition-opacity`}
+        style={{
+          textShadow: '0 0 20px rgba(255,255,255,0.3)',
+        }}
+      >
+        {label}
+      </span>
+    )}
+  </button>
 ));
 ControlButton.displayName = "ControlButton";
 
@@ -174,26 +194,27 @@ export const SublimeExperience = () => {
       : "radial-gradient(ellipse 80% 60% at 50% 50%, hsl(270 40% 15% / 0.5) 0%, transparent 60%)",
   }), [currentMode]);
 
-  // Control buttons config
+  // Control buttons config with labels
   const controls = useMemo(() => [
-    { id: "settings", icon: Settings },
-    { id: "statistics", icon: BarChart3 },
-    { id: "soundscape", icon: Volume2 },
-    { id: "guided", icon: Star },
-    { id: "wellness", icon: Heart },
-    { id: "binaural", icon: Brain },
-    { id: "game", icon: Gamepad2 },
-    { id: "coach", icon: Sparkles },
-    { id: "psychic", icon: Eye },
-    { id: "quantum", icon: Atom },
-    { id: "kaleidoscope", icon: Palette },
-    { id: "chakra", icon: Zap },
-    { id: "dream", icon: Moon },
-    { id: "manifest", icon: Target },
-    { id: "solfeggio", icon: Waves },
-    { id: "timewarp", icon: Sparkles },
-    { id: "radio", icon: Radio },
-    { id: "achievements", icon: Trophy },
+    { id: "settings", icon: Settings, label: "Settings", color: "from-slate-400 to-slate-300" },
+    { id: "statistics", icon: BarChart3, label: "Stats", color: "from-blue-400 to-cyan-300" },
+    { id: "soundscape", icon: Volume2, label: "Sounds", color: "from-emerald-400 to-teal-300" },
+    { id: "guided", icon: Star, label: "Guided", color: "from-yellow-400 to-amber-300" },
+    { id: "wellness", icon: Heart, label: "Wellness", color: "from-pink-400 to-rose-300" },
+    { id: "binaural", icon: Brain, label: "Binaural", color: "from-purple-400 to-violet-300" },
+    { id: "game", icon: Gamepad2, label: "Game", color: "from-green-400 to-emerald-300" },
+    { id: "coach", icon: Sparkles, label: "AI Coach", color: "from-amber-400 to-orange-300" },
+    { id: "psychic", icon: Eye, label: "Psychic", color: "from-indigo-400 to-purple-300" },
+    { id: "quantum", icon: Atom, label: "Quantum", color: "from-cyan-400 to-blue-300" },
+    { id: "kaleidoscope", icon: Palette, label: "Kaleidoscope", color: "from-fuchsia-400 to-pink-300" },
+    { id: "chakra", icon: Zap, label: "Chakra", color: "from-orange-400 to-red-300" },
+    { id: "dream", icon: Moon, label: "Dreams", color: "from-violet-400 to-indigo-300" },
+    { id: "manifest", icon: Target, label: "Manifest", color: "from-rose-400 to-pink-300" },
+    { id: "solfeggio", icon: Waves, label: "Solfeggio", color: "from-teal-400 to-cyan-300" },
+    { id: "timewarp", icon: Sparkles, label: "TimeWarp", color: "from-amber-400 to-yellow-300" },
+    { id: "radio", icon: Radio, label: "Radio", color: "from-red-400 to-orange-300" },
+    { id: "achievements", icon: Trophy, label: "Achieve", color: "from-yellow-400 to-amber-300" },
+    { id: "tunnel", icon: Navigation, label: "Tunnel", color: "from-blue-400 to-indigo-300" },
   ], []);
 
   const closeModal = useCallback(() => setActiveModal(null), []);
@@ -213,10 +234,16 @@ export const SublimeExperience = () => {
       <AudioToggle isMuted={isMuted} onToggle={toggleMute} onStopAll={muteAllAudio} />
       <ModeToggle currentMode={currentMode} onModeChange={handleModeChange} />
 
-      {/* Feature Controls - Scrollable */}
-      <div className="absolute top-6 right-6 flex flex-col gap-1.5 z-10 max-h-[80vh] overflow-y-auto scrollbar-hide">
-        {controls.map(({ id, icon }) => (
-          <ControlButton key={id} icon={icon} onClick={() => setActiveModal(id)} />
+      {/* Feature Controls - Scrollable with Luxury Labels */}
+      <div className="absolute top-6 right-6 flex flex-col gap-2 z-10 max-h-[85vh] overflow-y-auto scrollbar-hide pr-1">
+        {controls.map(({ id, icon, label, color }) => (
+          <ControlButton
+            key={id}
+            icon={icon}
+            label={label}
+            color={color}
+            onClick={() => setActiveModal(id)}
+          />
         ))}
       </div>
 
@@ -462,6 +489,9 @@ export const SublimeExperience = () => {
         )}
         {activeModal === "achievements" && (
           <AchievementsPanel isOpen={true} onClose={closeModal} />
+        )}
+        {activeModal === "tunnel" && (
+          <TunnelTravel isOpen={true} onClose={closeModal} />
         )}
       </Suspense>
     </div>
