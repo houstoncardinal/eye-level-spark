@@ -9,7 +9,7 @@ interface AudioToggleProps {
 
 export const AudioToggle = ({ isMuted, onToggle, onStopAll }: AudioToggleProps) => {
   return (
-    <div className="fixed top-6 left-6 z-50 flex gap-2">
+    <div className="fixed top-4 left-4 md:top-6 md:left-6 z-50 flex gap-1.5 md:gap-2">
       <motion.button
         className="p-3 rounded-full border border-primary/20 bg-background/30 backdrop-blur-sm"
         onClick={onToggle}

@@ -235,7 +235,11 @@ export const SublimeExperience = () => {
       <ModeToggle currentMode={currentMode} onModeChange={handleModeChange} />
 
       {/* Feature Controls - Scrollable with Luxury Labels */}
-      <div className="absolute top-6 right-6 flex flex-col gap-2 z-10 max-h-[85vh] overflow-y-auto scrollbar-hide pr-1">
+      {/* Desktop: right sidebar | Mobile: bottom horizontal scroll */}
+      <div className="
+        fixed bottom-0 left-0 right-0 flex flex-row gap-2 z-10 p-3 overflow-x-auto scrollbar-hide bg-black/60 backdrop-blur-md border-t border-white/5
+        md:absolute md:top-6 md:right-6 md:bottom-auto md:left-auto md:flex-col md:p-0 md:bg-transparent md:backdrop-blur-none md:border-0 md:max-h-[85vh] md:overflow-y-auto md:pr-1
+      ">
         {controls.map(({ id, icon, label, color }) => (
           <ControlButton
             key={id}
@@ -363,7 +367,7 @@ export const SublimeExperience = () => {
       {/* Mode hint */}
       {hasInteracted && (
         <motion.div
-          className="absolute bottom-6 left-6 text-muted-foreground/50 text-xs"
+          className="absolute bottom-16 md:bottom-6 left-4 md:left-6 text-muted-foreground/50 text-xs"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 3 }}
@@ -375,14 +379,14 @@ export const SublimeExperience = () => {
       {/* Cosmic Navigation */}
       {isEngaged && hasInteracted && (
         <motion.div
-          className="absolute bottom-20 left-6 z-20"
+          className="absolute bottom-24 md:bottom-20 left-4 md:left-6 z-20"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 5 }}
         >
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 mb-16 md:mb-0">
             <p className="text-xs text-primary/70 font-mono tracking-wider">
-              COSMIC DEPTH: {cosmicDepth.toFixed(1)}
+              DEPTH: {cosmicDepth.toFixed(1)}
             </p>
             <div className="flex gap-1">
               {['Nebula', 'Void', 'Core', 'Horizon'].map((region, i) => (

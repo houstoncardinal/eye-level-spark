@@ -132,7 +132,7 @@ export const StatisticsDashboard = ({ isOpen, onClose, stats }: StatisticsDashbo
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-6xl max-h-[90vh] overflow-hidden"
+            className="w-full max-w-6xl max-h-[90vh] overflow-hidden mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <Card className="bg-card/95 backdrop-blur-md border-border/50 h-full">
@@ -148,7 +148,7 @@ export const StatisticsDashboard = ({ isOpen, onClose, stats }: StatisticsDashbo
 
               <CardContent className="max-h-[75vh] overflow-y-auto">
                 <Tabs defaultValue="overview" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="progress">Progress</TabsTrigger>
                     <TabsTrigger value="achievements">Achievements</TabsTrigger>

@@ -280,7 +280,7 @@ export const QuantumPortal = ({ isOpen, onClose }: QuantumPortalProps) => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-7xl max-h-[90vh] overflow-hidden"
+            className="w-full max-w-7xl max-h-[90vh] overflow-hidden mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <Card className="bg-gradient-to-br from-indigo-900/95 via-purple-900/95 to-pink-900/95 backdrop-blur-md border-white/20 h-full">
@@ -348,7 +348,7 @@ export const QuantumPortal = ({ isOpen, onClose }: QuantumPortalProps) => {
                 </div>
 
                 <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-5">
                     <TabsTrigger value="states">Quantum States</TabsTrigger>
                     <TabsTrigger value="meditation">Quantum Meditation</TabsTrigger>
                     <TabsTrigger value="shifts">Reality Shifts</TabsTrigger>

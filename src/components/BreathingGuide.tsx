@@ -90,8 +90,8 @@ export const BreathingGuide = ({ isActive, onPhaseChange }: BreathingGuideProps)
           <motion.div
             className="absolute rounded-full border-2"
             style={{
-              width: 300,
-              height: 300,
+              width: 'min(300px, 70vw)',
+              height: 'min(300px, 70vw)',
               borderColor: `hsl(var(--primary) / ${0.3 + progress * 0.3})`,
             }}
             animate={{ scale: getScale() }}
@@ -102,8 +102,8 @@ export const BreathingGuide = ({ isActive, onPhaseChange }: BreathingGuideProps)
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: 250,
-              height: 250,
+              width: 'min(250px, 60vw)',
+              height: 'min(250px, 60vw)',
               background: `radial-gradient(circle, hsl(var(--primary) / ${0.05 + progress * 0.1}) 0%, transparent 70%)`,
             }}
             animate={{ scale: getScale() * 0.9 }}

@@ -256,7 +256,7 @@ export const SettingsPanel = ({ isOpen, onClose, settings, onSettingsChange }: S
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="relative z-10 w-full max-w-7xl max-h-[90vh] overflow-hidden"
+            className="relative z-10 w-full max-w-7xl max-h-[90vh] overflow-hidden mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <Card className="bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-xl border border-white/20 shadow-2xl">

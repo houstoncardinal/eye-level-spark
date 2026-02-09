@@ -71,7 +71,7 @@ export const AmbientText = ({ isActive }: AmbientTextProps) => {
   
   return (
     <motion.div
-      className="absolute bottom-20 left-0 right-0 text-center"
+      className="absolute bottom-24 md:bottom-20 left-0 right-0 text-center px-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 1, duration: 2 }}
@@ -79,7 +79,7 @@ export const AmbientText = ({ isActive }: AmbientTextProps) => {
       <AnimatePresence mode="wait">
         <motion.p
           key={`${isActive}-${messageIndex}`}
-          className="font-display text-2xl md:text-3xl tracking-widest text-glow"
+          className="font-display text-xl md:text-3xl tracking-widest text-glow"
           style={{ color: "hsl(var(--primary) / 0.8)" }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: isActive ? 1 : 0.6, y: 0 }}
