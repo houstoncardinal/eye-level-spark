@@ -469,7 +469,7 @@ export const AchievementsPanel = ({ isOpen, onClose }: AchievementsPanelProps) =
                   </TabsList>
 
                   <TabsContent value="all">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {achievements.map((achievement) => (
                         <AchievementCard
                           key={achievement.id}
@@ -481,7 +481,7 @@ export const AchievementsPanel = ({ isOpen, onClose }: AchievementsPanelProps) =
                   </TabsContent>
 
                   <TabsContent value="unlocked">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {achievements
                         .filter(a => a.unlocked)
                         .map((achievement) => (
@@ -502,7 +502,7 @@ export const AchievementsPanel = ({ isOpen, onClose }: AchievementsPanelProps) =
                   </TabsContent>
 
                   <TabsContent value="locked">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {achievements
                         .filter(a => !a.unlocked)
                         .map((achievement) => (

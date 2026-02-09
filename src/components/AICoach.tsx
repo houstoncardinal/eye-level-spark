@@ -61,7 +61,7 @@ export const AICoach = ({ isOpen, onClose }: AICoachProps) => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-6xl max-h-[90vh] overflow-hidden"
+            className="w-full max-w-6xl max-h-[90vh] overflow-hidden mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <Card className="bg-card/95 backdrop-blur-md border-border/50 h-full">
@@ -103,7 +103,7 @@ export const AICoach = ({ isOpen, onClose }: AICoachProps) => {
                 </motion.div>
 
                 <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                     <TabsTrigger value="insights">Insights</TabsTrigger>
                     <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
                     <TabsTrigger value="goals">Goals</TabsTrigger>

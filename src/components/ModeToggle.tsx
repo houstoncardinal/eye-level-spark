@@ -17,7 +17,7 @@ export const ModeToggle = ({ currentMode, onModeChange }: ModeToggleProps) => {
 
   return (
     <motion.div
-      className="fixed top-6 left-6 z-50 flex gap-2"
+      className="fixed top-[4.5rem] left-4 md:top-6 md:left-24 z-50 flex gap-1.5 md:gap-2"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 1.2 }}

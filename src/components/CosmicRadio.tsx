@@ -475,7 +475,7 @@ export const CosmicRadio = ({ isOpen, onClose }: CosmicRadioProps) => {
               </div>
 
               {/* Station grid */}
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {STATIONS.map((station) => {
                   const Icon = station.icon;
                   const isActive = currentStation?.id === station.id;

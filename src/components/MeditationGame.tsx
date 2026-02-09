@@ -91,7 +91,7 @@ export const MeditationGame = ({ isOpen, onClose }: MeditationGameProps) => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-5xl max-h-[90vh] overflow-hidden"
+            className="w-full max-w-5xl max-h-[90vh] overflow-hidden mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <Card className="bg-card/95 backdrop-blur-md border-border/50 h-full">
@@ -110,7 +110,7 @@ export const MeditationGame = ({ isOpen, onClose }: MeditationGameProps) => {
 
               <CardContent className="max-h-[75vh] overflow-y-auto">
                 <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-5">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="achievements">Achievements</TabsTrigger>
                     <TabsTrigger value="pets">Pets</TabsTrigger>
