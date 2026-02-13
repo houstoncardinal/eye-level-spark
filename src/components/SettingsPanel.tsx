@@ -156,149 +156,80 @@ export const SettingsPanel = ({ isOpen, onClose, settings, onSettingsChange }: S
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{
-            background: `radial-gradient(circle at center, hsl(270 80% 5%) 0%, hsl(240 100% 2%) 50%, black 100%)`,
-          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
           onClick={onClose}
         >
-          {/* Portal Entrance Animation */}
+          {/* Subtle orbital rings */}
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            exit={{ scale: 0, rotate: 180 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            className="absolute inset-0 flex items-center justify-center"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.15 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
           >
-            {/* Outer Portal Rings */}
             {[0, 1, 2].map((ring) => (
               <motion.div
                 key={ring}
-                className="absolute rounded-full border-2"
+                className="absolute rounded-full border"
                 style={{
-                  width: 400 + ring * 200,
-                  height: 400 + ring * 200,
-                  borderColor: `hsl(${270 + ring * 30} 70% 50% / 0.3)`,
+                  width: 500 + ring * 200,
+                  height: 500 + ring * 200,
+                  borderColor: `hsl(${270 + ring * 30} 70% 50% / 0.15)`,
                 }}
-                animate={{
-                  rotate: 360,
-                  scale: [1, 1.1, 1],
-                }}
+                animate={{ rotate: 360 }}
                 transition={{
-                  rotate: { duration: 20 + ring * 5, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 4, repeat: Infinity },
+                  rotate: { duration: 30 + ring * 10, repeat: Infinity, ease: "linear" },
                 }}
               />
             ))}
-
-            {/* Central Portal Vortex */}
-            <motion.div
-              className="relative w-96 h-96 rounded-full overflow-hidden"
-              style={{
-                background: `conic-gradient(from 0deg, transparent 0deg, hsl(280 100% 70%) 90deg, transparent 180deg, hsl(240 100% 70%) 270deg, transparent 360deg)`,
-              }}
-              animate={{
-                rotate: [0, 360],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              {/* Portal Core */}
-              <motion.div
-                className="absolute inset-8 rounded-full"
-                style={{
-                  background: `radial-gradient(circle, hsl(270 100% 90%) 0%, hsl(240 100% 60%) 50%, transparent 100%)`,
-                  boxShadow: `0 0 100px hsl(270 100% 70%), inset 0 0 50px hsl(240 100% 80%)`,
-                }}
-                animate={{
-                  scale: [0.8, 1.2, 0.8],
-                  opacity: [0.7, 1, 0.7],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                }}
-              />
-
-              {/* Floating Energy Particles */}
-              {Array.from({ length: 12 }, (_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-2 h-2 rounded-full"
-                  style={{
-                    background: `hsl(${270 + i * 30} 100% 70%)`,
-                    boxShadow: `0 0 10px hsl(${270 + i * 30} 100% 70%)`,
-                    left: '50%',
-                    top: '50%',
-                  }}
-                  animate={{
-                    x: Math.cos((i / 12) * Math.PI * 2) * 120,
-                    y: Math.sin((i / 12) * Math.PI * 2) * 120,
-                    scale: [0.5, 1.5, 0.5],
-                    opacity: [0.3, 1, 0.3],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                  }}
-                />
-              ))}
-            </motion.div>
           </motion.div>
 
-          {/* Portal Interface */}
+          {/* Main content */}
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            transition={{ delay: 1, duration: 0.8 }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
             className="relative z-10 w-full max-w-7xl max-h-[90vh] overflow-hidden mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <Card className="bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-xl border border-white/20 shadow-2xl">
-              <CardHeader className="text-center border-b border-white/10">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 1.5, type: "spring", stiffness: 200 }}
-                >
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <InfinityIcon className="w-8 h-8 text-cyan-400 animate-pulse" />
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      Quantum Manifestation Nexus
-                    </h1>
-                    <InfinityIcon className="w-8 h-8 text-cyan-400 animate-pulse" />
-                  </div>
-                  <p className="text-white/70 text-lg">
-                    Welcome to the infinite realms of creation and manifestation
-                  </p>
-                </motion.div>
+            <div className="rounded-3xl glass overflow-hidden">
+              {/* Top shimmer */}
+              <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+              
+              <div className="text-center border-b border-white/[0.06] p-6">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <InfinityIcon className="w-6 h-6 text-cyan-400 animate-pulse-slow" />
+                  <h1 className="text-2xl font-display tracking-wide bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    Quantum Manifestation Nexus
+                  </h1>
+                  <InfinityIcon className="w-6 h-6 text-cyan-400 animate-pulse-slow" />
+                </div>
+                <p className="text-xs text-muted-foreground tracking-wide">
+                  Welcome to the infinite realms of creation and manifestation
+                </p>
 
-                <div className="flex items-center justify-between mt-6">
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline" className="text-cyan-400 border-cyan-400/50">
-                      Portal Energy: {portalEnergy}%
+                <div className="flex items-center justify-between mt-5">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-[10px] border-cyan-400/30 text-cyan-400 font-mono tracking-wider">
+                      Energy: {portalEnergy}%
                     </Badge>
-                    <div className="w-32 h-2 bg-black/50 rounded-full overflow-hidden">
+                    <div className="w-24 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
                       <motion.div
-                        className="h-full bg-gradient-to-r from-cyan-400 to-purple-400"
+                        className="h-full bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"
                         initial={{ width: 0 }}
                         animate={{ width: `${portalEnergy}%` }}
                         transition={{ duration: 1 }}
                       />
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={onClose} className="text-white/70 hover:text-white">
-                    <X className="w-5 h-5" />
-                  </Button>
+                  <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 transition-colors">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
                 </div>
-              </CardHeader>
+              </div>
 
-              <CardContent className="max-h-[65vh] overflow-y-auto p-8">
+              <div className="max-h-[65vh] overflow-y-auto p-8 scrollbar-hide">
                 <Tabs defaultValue="realities" className="w-full">
                   <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/30">
                     <TabsTrigger value="realities" className="text-white/80 data-[state=active]:text-cyan-400">
@@ -649,8 +580,8 @@ export const SettingsPanel = ({ isOpen, onClose, settings, onSettingsChange }: S
                     </div>
                   </TabsContent>
                 </Tabs>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
       )}

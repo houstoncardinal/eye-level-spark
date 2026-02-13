@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Lock, Sparkles, ArrowRight, X } from "lucide-react";
+import { Lock, Sparkles, ArrowRight, X, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -27,35 +27,58 @@ export const PaywallDialog = ({ isOpen, onClose, featureName }: PaywallDialogPro
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.92, opacity: 0, y: 10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.92, opacity: 0, y: 10 }}
+        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm rounded-2xl bg-card border border-border p-8 text-center"
+        className="relative w-full max-w-sm rounded-3xl glass p-8 text-center overflow-hidden"
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        {/* Subtle gradient shimmer at top */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-muted-foreground hover:text-foreground transition-colors duration-200"
+        >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
-          <Lock className="w-6 h-6 text-primary" />
-        </div>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 15 }}
+          className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 relative"
+        >
+          <Lock className="w-7 h-7 text-primary" />
+          <div className="absolute inset-0 rounded-2xl bg-primary/5 animate-pulse-slow" />
+        </motion.div>
 
-        <h3 className="font-display text-2xl mb-2">{featureName}</h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          This is a premium feature. Upgrade to Transcendent for $9.99/mo to unlock all advanced tools.
+        <h3 className="font-display text-2xl mb-2 text-foreground">{featureName}</h3>
+        <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
+          Unlock this premium feature with Transcendent at <span className="text-primary font-medium">$9.99/mo</span>
         </p>
 
         <div className="space-y-3">
-          <Button onClick={handleUpgrade} className="w-full rounded-full glow-soft">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Upgrade Now <ArrowRight className="w-4 h-4 ml-2" />
+          <Button
+            onClick={handleUpgrade}
+            className="w-full rounded-2xl h-12 text-sm font-medium tracking-wide glow-soft relative overflow-hidden group"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <Crown className="w-4 h-4" />
+              Upgrade Now
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </span>
           </Button>
-          <Button variant="ghost" onClick={onClose} className="w-full">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="w-full rounded-2xl h-10 text-xs text-muted-foreground hover:text-foreground"
+          >
             Maybe Later
           </Button>
         </div>

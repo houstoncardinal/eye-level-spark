@@ -57,17 +57,14 @@ const ControlButton = memo(({
 }) => (
   <button
     onClick={onClick}
-    className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:border-white/30 hover:bg-black/60 transition-all duration-300 will-change-transform hover:scale-105"
+    className="group flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl glass-button will-change-transform hover:scale-[1.04] active:scale-[0.97] transition-all duration-300"
   >
-    <div className={`p-1.5 rounded-lg bg-gradient-to-br ${color} shadow-lg`}>
+    <div className={`p-1.5 rounded-xl bg-gradient-to-br ${color} shadow-lg shadow-black/30`}>
       <Icon className="w-3.5 h-3.5 text-black/80" />
     </div>
     {label && (
       <span
-        className={`text-xs font-medium tracking-wide bg-gradient-to-r ${color} bg-clip-text text-transparent opacity-80 group-hover:opacity-100 transition-opacity`}
-        style={{
-          textShadow: '0 0 20px rgba(255,255,255,0.3)',
-        }}
+        className={`text-[11px] font-medium tracking-widest uppercase bg-gradient-to-r ${color} bg-clip-text text-transparent opacity-70 group-hover:opacity-100 transition-opacity duration-300`}
       >
         {label}
       </span>
@@ -260,35 +257,37 @@ export const SublimeExperience = () => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:border-white/30 transition-all"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl glass-button transition-all duration-300 hover:scale-[1.03]"
             >
               {subscribed && <Crown className="w-3.5 h-3.5 text-primary" />}
               <User className="w-3.5 h-3.5 text-foreground/70" />
             </button>
             {showUserMenu && (
               <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full left-0 mt-2 w-48 rounded-xl bg-card border border-border p-2 space-y-1"
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                className="absolute top-full left-0 mt-3 w-52 rounded-2xl glass p-2 space-y-0.5"
               >
-                <p className="text-xs text-muted-foreground px-3 py-1 truncate">{user.email}</p>
+                <p className="text-[11px] text-muted-foreground px-3 py-2 truncate font-medium tracking-wide uppercase opacity-60">{user.email}</p>
+                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-1" />
                 {subscribed ? (
-                  <button onClick={() => { openPortal(); setShowUserMenu(false); }} className="w-full text-left text-xs px-3 py-2 rounded-lg hover:bg-muted transition-colors">
+                  <button onClick={() => { openPortal(); setShowUserMenu(false); }} className="w-full text-left text-xs px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors duration-200">
                     Manage Subscription
                   </button>
                 ) : (
-                  <button onClick={() => { startCheckout(); setShowUserMenu(false); }} className="w-full text-left text-xs px-3 py-2 rounded-lg hover:bg-muted transition-colors text-primary">
-                    <Crown className="w-3 h-3 inline mr-1" /> Upgrade to Pro
+                  <button onClick={() => { startCheckout(); setShowUserMenu(false); }} className="w-full text-left text-xs px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-colors duration-200 text-primary font-medium">
+                    <Crown className="w-3 h-3 inline mr-1.5" /> Upgrade to Pro
                   </button>
                 )}
-                <button onClick={() => { signOut(); setShowUserMenu(false); }} className="w-full text-left text-xs px-3 py-2 rounded-lg hover:bg-muted transition-colors text-destructive">
-                  <LogOut className="w-3 h-3 inline mr-1" /> Sign Out
+                <button onClick={() => { signOut(); setShowUserMenu(false); }} className="w-full text-left text-xs px-3 py-2.5 rounded-xl hover:bg-destructive/10 transition-colors duration-200 text-destructive/80">
+                  <LogOut className="w-3 h-3 inline mr-1.5" /> Sign Out
                 </button>
               </motion.div>
             )}
           </div>
         ) : (
-          <a href="/auth" className="px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:border-white/30 transition-all text-xs text-foreground/70">
+          <a href="/auth" className="px-4 py-2.5 rounded-2xl glass-button text-xs text-foreground/70 font-medium tracking-wide hover:text-foreground transition-all duration-300">
             Sign In
           </a>
         )}
@@ -297,8 +296,8 @@ export const SublimeExperience = () => {
       {/* Feature Controls - Scrollable with Luxury Labels */}
       {/* Desktop: right sidebar | Mobile: bottom horizontal scroll */}
       <div className="
-        fixed bottom-0 left-0 right-0 flex flex-row gap-2 z-10 p-3 overflow-x-auto scrollbar-hide bg-black/60 backdrop-blur-md border-t border-white/5
-        md:absolute md:top-6 md:right-6 md:bottom-auto md:left-auto md:flex-col md:p-0 md:bg-transparent md:backdrop-blur-none md:border-0 md:max-h-[85vh] md:overflow-y-auto md:pr-1
+        fixed bottom-0 left-0 right-0 flex flex-row gap-2 z-10 p-3 overflow-x-auto scrollbar-hide glass border-t border-white/5
+        md:absolute md:top-6 md:right-6 md:bottom-auto md:left-auto md:flex-col md:p-2 md:rounded-2xl md:border md:border-white/[0.08] md:bg-transparent md:backdrop-blur-none md:shadow-none md:max-h-[85vh] md:overflow-y-auto md:pr-1
       ">
         {controls.map(({ id, icon, label, color }) => (
           <div key={id} className="relative">
